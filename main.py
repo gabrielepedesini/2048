@@ -354,22 +354,28 @@ def game_loop(stdscr):
     curses.init_pair(10, 33, -1)   # 1024 → teal
     curses.init_pair(11, 196, -1)  # 2048 → bright red
 
+    draw_board(stdscr)
+
     while True:
-        draw_board(stdscr)
         key = stdscr.getch()
 
         if key in (ord('q'), ord('Q')):
             break
         elif key in (ord('r'), ord('R')):
             init_game()
+            draw_board(stdscr)
         elif key in (ord('w'), ord('W'), curses.KEY_UP, 450):
             move_up()
+            draw_board(stdscr)
         elif key in (ord('a'), ord('A'), curses.KEY_LEFT, 452):
             move_left()
+            draw_board(stdscr)
         elif key in (ord('d'), ord('D'), curses.KEY_RIGHT, 454):
             move_right()
+            draw_board(stdscr)
         elif key in (ord('s'), ord('S'), curses.KEY_DOWN, 456):
             move_down()
+            draw_board(stdscr)
 
         time.sleep(0.05)
 
