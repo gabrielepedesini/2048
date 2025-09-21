@@ -5,11 +5,11 @@ import curses
 
 board = None
 not_addable = None
+score = None
 game_over = None
 move_lock = threading.Lock()
 colors = {
-    2: 1, 4: 2, 8: 3, 16: 4, 32: 5, 64: 6,
-    128: 7, 256: 8, 512: 9, 1024: 10, 2048: 11
+    2: 1, 4: 2, 8: 3, 16: 4, 32: 5, 64: 6, 128: 7, 256: 8, 512: 9, 1024: 10, 2048: 11
 }
 
 
@@ -18,7 +18,7 @@ colors = {
 # =============================
 
 def init_game():
-    global board, not_addable, game_over
+    global board, not_addable, score, game_over
     
     board = [   
         [None, None, None, None],
@@ -34,6 +34,7 @@ def init_game():
         [False, False, False, False]
     ]
 
+    score = 0
     game_over = False
 
     generate_tile()
@@ -65,9 +66,11 @@ def move_tile(start: list[int], end: list[int]):
 # =============================
 
 def sum_tiles(start: list[int], end: list[int]):
+    global score
     board[end[0]][end[1]] *= 2
     board[start[0]][start[1]] = None
     not_addable[end[0]][end[1]] = True
+    score += board[end[0]][end[1]]
 
 
 # =============================
@@ -143,11 +146,11 @@ def move_left():
                 else:
                     break
             
-    check_game_over()
-            
-    if changes > 0 and not game_over:
+    if changes > 0:
         generate_tile()
         reset_not_addable()
+
+    check_game_over()
 
     move_lock.release()
 
@@ -177,11 +180,11 @@ def move_right():
                 else:
                     break
             
-    check_game_over()
-            
-    if changes > 0 and not game_over:
+    if changes > 0:
         generate_tile()
         reset_not_addable()
+
+    check_game_over()
 
     move_lock.release()
 
@@ -211,11 +214,11 @@ def move_up():
                 else:
                     break
             
-    check_game_over()
-            
-    if changes > 0 and not game_over:
+    if changes > 0:
         generate_tile()
         reset_not_addable()
+
+    check_game_over()
 
     move_lock.release()
 
@@ -244,12 +247,12 @@ def move_down():
                     changes += 1
                 else:
                     break
-
-    check_game_over()
             
-    if changes > 0 and not game_over:
+    if changes > 0:
         generate_tile()
         reset_not_addable()
+
+    check_game_over()
 
     move_lock.release()
         
@@ -318,10 +321,12 @@ def draw_board(stdscr):
 
     if game_over:
         stdscr.addstr("\nGame Over! No more moves possible...\n")
-    else:
-        stdscr.addstr("\nUse 'wasd' to move...\n")
 
-    stdscr.addstr("\nPress 'q' to quit and 'r' to restart\n")
+    stdscr.addstr(f"\nScore: {score}\n")
+    stdscr.addstr("\n'wasd' or arrow buttons - move")
+    stdscr.addstr("\n'r' - restart")
+    stdscr.addstr("\n'q' - quit\n")
+    
     stdscr.refresh()
 
 
@@ -337,17 +342,17 @@ def game_loop(stdscr):
     curses.start_color()
     curses.use_default_colors()
 
-    curses.init_pair(1, curses.COLOR_WHITE, curses.COLOR_BLACK)
-    curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
-    curses.init_pair(3, curses.COLOR_MAGENTA, curses.COLOR_BLACK)
-    curses.init_pair(4, curses.COLOR_CYAN, curses.COLOR_BLACK)
-    curses.init_pair(5, curses.COLOR_BLUE, curses.COLOR_BLACK)
-    curses.init_pair(6, curses.COLOR_GREEN, curses.COLOR_BLACK)
-    curses.init_pair(7, curses.COLOR_RED, curses.COLOR_BLACK)
-    curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLUE)
-    curses.init_pair(9, curses.COLOR_WHITE, curses.COLOR_MAGENTA)
-    curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_YELLOW)
-    curses.init_pair(11, curses.COLOR_BLACK, curses.COLOR_RED)  
+    curses.init_pair(1, 15, -1)    # 2 → white
+    curses.init_pair(2, 190, -1)   # 4 → light yellow
+    curses.init_pair(3, 82, -1)    # 8 → bright green
+    curses.init_pair(4, 155, -1)   # 16 → green
+    curses.init_pair(5, 39, -1)    # 32 → blue
+    curses.init_pair(6, 201, -1)   # 64 → magenta
+    curses.init_pair(7, 208, -1)   # 128 → orange
+    curses.init_pair(8, 220, -1)   # 256 → golden yellow
+    curses.init_pair(9, 93, -1)    # 512 → purple
+    curses.init_pair(10, 33, -1)   # 1024 → teal
+    curses.init_pair(11, 196, -1)  # 2048 → bright red
 
     while True:
         draw_board(stdscr)
@@ -357,13 +362,13 @@ def game_loop(stdscr):
             break
         elif key in (ord('r'), ord('R')):
             init_game()
-        elif key in (ord('a'), ord('A')):
-            move_left()
-        elif key in (ord('d'), ord('D')):  
-            move_right()
-        elif key in (ord('w'), ord('W')):  
+        elif key in (ord('w'), ord('W'), curses.KEY_UP, 450):
             move_up()
-        elif key in (ord('s'), ord('S')):  
+        elif key in (ord('a'), ord('A'), curses.KEY_LEFT, 452):
+            move_left()
+        elif key in (ord('d'), ord('D'), curses.KEY_RIGHT, 454):
+            move_right()
+        elif key in (ord('s'), ord('S'), curses.KEY_DOWN, 456):
             move_down()
 
         time.sleep(0.05)
